@@ -22,20 +22,28 @@ client.on("messageCreate", async (message) => {
   }
 
   console.log(`Message received from ${message.author.username}: ${message.content}`);
-  const keyword = detectKeyword(message.content);
-  console.log("Detected keyword:", keyword);
+  console.log("Starting 10-second delay before GIF response...");
 
   try {
     await new Promise((resolve) => setTimeout(resolve, 10000));
+    console.log("Delay complete. Detecting keyword...");
+
+    const keyword = detectKeyword(message.content);
+    console.log("Detected keyword:", keyword);
+
+    console.log("Sending typing indicator...");
     await message.channel.sendTyping();
 
+    console.log("Searching Giphy...");
     const gifUrl = await searchGif(keyword);
     if (!gifUrl) {
-      console.warn(`No GIF found for emotion: ${keyword}`);
+      console.warn(`No GIF found for keyword: ${keyword}`);
       return;
     }
 
+    console.log("GIF found. Sending to channel...");
     await message.channel.send(gifUrl);
+    console.log("GIF sent successfully.");
   } catch (error) {
     console.error("Failed to send GIF response:", error.message);
   }
