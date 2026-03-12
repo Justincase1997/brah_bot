@@ -22,15 +22,16 @@ client.on("messageCreate", async (message) => {
   }
 
   console.log(`Message received from ${message.author.username}: ${message.content}`);
+  const keyword = detectKeyword(message.content);
+  console.log("Detected keyword:", keyword);
 
   try {
     await new Promise((resolve) => setTimeout(resolve, 10000));
     await message.channel.sendTyping();
 
-    const emotion = detectKeyword(message.content);
-    const gifUrl = await searchGif(emotion);
+    const gifUrl = await searchGif(keyword);
     if (!gifUrl) {
-      console.warn(`No GIF found for emotion: ${emotion}`);
+      console.warn(`No GIF found for emotion: ${keyword}`);
       return;
     }
 
