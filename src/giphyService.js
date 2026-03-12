@@ -17,7 +17,7 @@ async function searchGif(query) {
   }
 
   const searchQuery = typeof query === "string" && query.trim() ? query.trim() : "meme";
-  console.log("Fetching GIF from Giphy:", searchQuery);
+  console.log(`Fetching GIF from Giphy for emotion: ${searchQuery}`);
 
   try {
     const response = await axios.get("https://api.giphy.com/v1/gifs/search", {

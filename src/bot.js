@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const { Client, GatewayIntentBits } = require("discord.js");
 const { searchGif } = require("./giphyService");
+const { detectKeyword } = require("./messageAnalyzer");
 
 const client = new Client({
   intents: [
@@ -26,9 +27,10 @@ client.on("messageCreate", async (message) => {
     await new Promise((resolve) => setTimeout(resolve, 10000));
     await message.channel.sendTyping();
 
-    const gifUrl = await searchGif("meme");
+    const emotion = detectKeyword(message.content);
+    const gifUrl = await searchGif(emotion);
     if (!gifUrl) {
-      console.warn("No GIF found for query: meme");
+      console.warn(`No GIF found for emotion: ${emotion}`);
       return;
     }
 
