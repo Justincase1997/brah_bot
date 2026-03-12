@@ -1,39 +1,10 @@
 const fs = require("fs");
 const path = require("path");
 
-const SUPPORTED_EXTENSIONS = new Set([".gif", ".png", ".jpg", ".jpeg", ".webp"]);
-
-function isSupportedMemeFile(filePath) {
-  const extension = path.extname(filePath).toLowerCase();
-  return SUPPORTED_EXTENSIONS.has(extension);
-}
-
-function collectMemeFiles(rootDirectory) {
-  if (!fs.existsSync(rootDirectory)) {
-    return [];
-  }
-
-  const files = [];
-  const entries = fs.readdirSync(rootDirectory, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const fullPath = path.join(rootDirectory, entry.name);
-
-    if (entry.isDirectory()) {
-      files.push(...collectMemeFiles(fullPath));
-      continue;
-    }
-
-    if (entry.isFile() && isSupportedMemeFile(fullPath)) {
-      files.push(fullPath);
-    }
-  }
-
-  return files;
-}
+const GIF_EXTENSION = ".gif";
 
 function pickRandom(items) {
-  if (!items.length) {
+  if (!Array.isArray(items) || !items.length) {
     return null;
   }
 
@@ -41,14 +12,62 @@ function pickRandom(items) {
   return items[index];
 }
 
-async function getRandomMeme(options = {}) {
-  const memeRoot = options.memeRoot || "memes";
-  const category = options.category;
-  const baseRoot = path.resolve(process.cwd(), memeRoot);
-  const searchRoot = category ? path.join(baseRoot, category) : baseRoot;
-  const memeFiles = collectMemeFiles(searchRoot);
+function getCategoryDirectories(rootDirectory) {
+  if (!fs.existsSync(rootDirectory)) {
+    return [];
+  }
 
-  return pickRandom(memeFiles);
+  const entries = fs.readdirSync(rootDirectory, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(rootDirectory, entry.name));
+}
+
+function getGifFiles(directory) {
+  if (!fs.existsSync(directory)) {
+    return [];
+  }
+
+  const entries = fs.readdirSync(directory, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isFile() && path.extname(entry.name).toLowerCase() === GIF_EXTENSION)
+    .map((entry) => path.join(directory, entry.name));
+}
+
+function shuffle(items) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = copy[i];
+    copy[i] = copy[j];
+    copy[j] = tmp;
+  }
+  return copy;
+}
+
+function getRandomMeme(options = {}) {
+  const memeRoot = options.memeRoot || "memes";
+  const rootDirectory = path.resolve(process.cwd(), memeRoot);
+
+  if (!fs.existsSync(rootDirectory)) {
+    return null;
+  }
+
+  const categories = getCategoryDirectories(rootDirectory);
+
+  if (!categories.length) {
+    return pickRandom(getGifFiles(rootDirectory));
+  }
+
+  const categoryOrder = shuffle(categories);
+  for (const categoryDirectory of categoryOrder) {
+    const gifFiles = getGifFiles(categoryDirectory);
+    if (gifFiles.length) {
+      return pickRandom(gifFiles);
+    }
+  }
+
+  return null;
 }
 
 module.exports = {
